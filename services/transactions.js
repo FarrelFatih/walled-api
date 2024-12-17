@@ -1,5 +1,4 @@
 const transactionRepository = require("../repositories/transactions");
-const userRepository = require("../repositories/users");
 
 // const createTransaction = async (transaction, user) => {
 //   const userId = transaction.user_id;
@@ -14,13 +13,22 @@ const userRepository = require("../repositories/users");
 //   return trans;
 // };
 
-const createTransaction = async (transaction) => {
+const createTransfer = async (transaction) => {
   try {
-    // Call the repository to create the transaction
-    const createdTransaction = await transactionRepository.createTransaction(
+    const createdTransfer = await transactionRepository.createTransfer(
       transaction
     );
-    return createdTransaction;
+    return createdTransfer;
+  } catch (error) {
+    console.error("Error in createTransaction service:", error);
+    throw new Error("Service error occurred while creating the transaction.");
+  }
+};
+
+const createTopup = async (transaction) => {
+  try {
+    const createdTopup = await transactionRepository.createTopup(transaction);
+    return createdTopup;
   } catch (error) {
     console.error("Error in createTransaction service:", error);
     throw new Error("Service error occurred while creating the transaction.");
@@ -44,6 +52,7 @@ const getTransactionsByUser = async ({ idFromToken }) => {
 };
 
 module.exports = {
-  createTransaction,
+  createTransfer,
+  createTopup,
   getTransactionsByUser,
 };

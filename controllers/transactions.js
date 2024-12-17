@@ -1,5 +1,4 @@
 const transactionService = require("../services/transactions");
-
 // const createTransaction = async (req, res) => {
 //   try {
 //     const transaction = await transactionService.createTransaction(req.body);
@@ -13,27 +12,23 @@ const transactionService = require("../services/transactions");
 //   }
 // };
 
-const createTransaction = async (req, res) => {
+const createTransfer = async (req, res) => {
   try {
-    // Validate input
     if (
       !req.body.type ||
       !req.body.from_to ||
       !req.body.description ||
-      !req.body.amount
+      !req.body.amount ||
+      !req.body.user_id
     ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+    const transaction = await transactionService.createTransfer(req.body);
 
-    // Call the service to create the transaction
-    const transaction = await transactionService.createTransaction(req.body);
-
-    // Respond with the created transaction
     res.status(201).json({ data: transaction });
   } catch (error) {
     console.log(error);
 
-    // Handle specific errors
     if (
       error.message === "User not found" ||
       error.message === "Insufficient balance"
@@ -41,7 +36,28 @@ const createTransaction = async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
-    // Handle unexpected errors
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const createTopup = async (req, res) => {
+  try {
+    if (!req.body.description || !req.body.amount || !req.body.user_id) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const transaction = await transactionService.createTopup(req.body);
+    res.status(201).json({ data: transaction });
+    // res.status(201).json({ data: transaction });
+  } catch (error) {
+    console.log(error.message);
+    if (
+      error.message === "User not found" ||
+      error.message === "Insufficient balance"
+    ) {
+      return res.status(400).json({ error: error.message });
+    }
+
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -70,4 +86,4 @@ const getTransByToken = async (req, res) => {
   }
 };
 
-module.exports = { createTransaction, getTransByToken };
+module.exports = { createTransfer, createTopup, getTransByToken };

@@ -13,15 +13,14 @@ const getTransactionByUser = async (user_id) => {
   }
 };
 
-const createTransaction = async (transaction) => {
+const createTransfer = async (transaction) => {
   const { type, from_to, description, amount, user_id } = transaction;
 
-  const client = await pool.connect(); // Start a transaction
+  const client = await pool.connect();
 
   try {
-    await client.query("BEGIN"); // Start the transaction block
+    await client.query("BEGIN");
 
-    // Check if the current user has enough balance before proceeding
     const userBalanceResult = await client.query(
       "SELECT balance FROM users WHERE id = $1",
       [user_id]
@@ -36,32 +35,68 @@ const createTransaction = async (transaction) => {
       throw new Error("Insufficient balance");
     }
 
-    // Update the balance for the 'from_to' user (add amount)
     await client.query(
       "UPDATE users SET balance = balance + $1 WHERE id = $2",
       [amount, from_to]
     );
 
-    // Update the balance for the current user (subtract amount)
     await client.query(
       "UPDATE users SET balance = balance - $1 WHERE id = $2",
       [amount, user_id]
     );
 
-    // Insert the new transaction record
     const result = await client.query(
       "INSERT INTO transactions (type, from_to, description, amount, user_id, date_time) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *",
       [type, from_to, description, amount, user_id]
     );
 
-    await client.query("COMMIT"); // Commit the transaction block
+    await client.query("COMMIT");
     return result.rows[0];
   } catch (error) {
-    await client.query("ROLLBACK"); // Rollback if something goes wrong
+    await client.query("ROLLBACK");
     console.error("Error in createTransaction:", error);
     throw new Error("Database error occurred while creating the transaction.");
   } finally {
-    client.release(); // Release the client back to the pool
+    client.release();
+  }
+};
+
+const createTopup = async (transaction) => {
+  const { description, amount, user_id } = transaction;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const userBalanceResult = await client.query(
+      "SELECT balance FROM users WHERE id = $1",
+      [user_id]
+    );
+
+    if (userBalanceResult.rows.length === 0) {
+      throw new Error("User not found");
+    }
+
+    await client.query(
+      "UPDATE users SET balance = balance + $1 WHERE id = $2",
+      [amount, user_id]
+    );
+
+    const result = await client.query(
+      "INSERT INTO transactions (type, from_to, description, amount, user_id, date_time ) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *",
+      ["TOPUP", user_id, description, amount, user_id]
+    );
+
+    await client.query("COMMIT");
+    return result.rows[0];
+  } catch (error) {
+    console.log(error.message);
+    await client.query("ROLLBACK");
+    console.error("Error in topup:", error);
+    throw new Error("Database error occurred while topping up the balance.");
+  } finally {
+    client.release();
   }
 };
 
@@ -88,6 +123,7 @@ const createTransaction = async (transaction) => {
 // };
 
 module.exports = {
-  createTransaction,
+  createTransfer,
   getTransactionByUser,
+  createTopup,
 };

@@ -1,9 +1,9 @@
-class  userResponse {
+class userResponse {
   constructor(user) {
     this.name = user.name;
     this.email = user.email;
-    this.password = user.password;  
+    this.password = user.password;
   }
 }
 
-module.exports = userResponse;
+module.exports = { userResponse };
