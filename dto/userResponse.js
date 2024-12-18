@@ -6,4 +6,4 @@ class userResponse {
   }
 }
 
-module.exports = { userResponse };
+module.exports = userResponse;
