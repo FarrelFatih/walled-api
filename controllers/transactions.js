@@ -14,18 +14,22 @@ const transactionService = require("../services/transactions");
 
 const createTransfer = async (req, res) => {
   try {
-    if (
-      !req.body.type ||
-      !req.body.from_to ||
-      !req.body.description ||
-      !req.body.amount ||
-      !req.body.user_id
-    ) {
+    if (!req.body.from_to || !req.body.description || !req.body.amount) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    const transaction = await transactionService.createTransfer(req.body);
 
-    res.status(201).json({ data: transaction });
+    const transaction = {
+      description: req.body.description,
+      amount: req.body.amount,
+      from_to: req.body.from_to,
+      user_id: req.user.id,
+    };
+
+    const createdTransfer = await transactionService.createTransfer(
+      transaction
+    );
+
+    res.status(201).json({ data: createdTransfer });
   } catch (error) {
     console.log(error);
 
@@ -35,20 +39,49 @@ const createTransfer = async (req, res) => {
     ) {
       return res.status(400).json({ error: error.message });
     }
-
+    console.log(error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
+// const createTopup = async (req, res) => {
+//   try {
+//     if (!req.body.description || !req.body.amount || !req.body.user_id) {
+//       return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     const transaction = await transactionService.createTopup(req.body);
+//     res.status(201).json({ data: transaction });
+//     // res.status(201).json({ data: transaction });
+//   } catch (error) {
+//     console.log(error.message);
+//     if (
+//       error.message === "User not found" ||
+//       error.message === "Insufficient balance"
+//     ) {
+//       return res.status(400).json({ error: error.message });
+//     }
+
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+
 const createTopup = async (req, res) => {
   try {
-    if (!req.body.description || !req.body.amount || !req.body.user_id) {
+    // Memastikan semua field yang diperlukan ada
+    if (!req.body.description || !req.body.amount) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const transaction = await transactionService.createTopup(req.body);
-    res.status(201).json({ data: transaction });
-    // res.status(201).json({ data: transaction });
+    const transaction = {
+      description: req.body.description,
+      amount: req.body.amount,
+      user_id: req.user.id, // Mendapatkan user_id dari token
+    };
+
+    // Memanggil service untuk membuat topup
+    const createdTopup = await transactionService.createTopup(transaction);
+    res.status(201).json({ data: createdTopup });
   } catch (error) {
     console.log(error.message);
     if (

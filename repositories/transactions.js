@@ -13,8 +13,56 @@ const getTransactionByUser = async (user_id) => {
   }
 };
 
+// const createTransfer = async (transaction) => {
+//   const { type, from_to, description, amount, user_id } = transaction;
+
+//   const client = await pool.connect();
+
+//   try {
+//     await client.query("BEGIN");
+
+//     const userBalanceResult = await client.query(
+//       "SELECT balance FROM users WHERE id = $1",
+//       [user_id]
+//     );
+
+//     if (userBalanceResult.rows.length === 0) {
+//       throw new Error("User not found");
+//     }
+
+//     const userBalance = userBalanceResult.rows[0].balance;
+//     if (userBalance < amount) {
+//       throw new Error("Insufficient balance");
+//     }
+
+//     await client.query(
+//       "UPDATE users SET balance = balance + $1 WHERE id = $2",
+//       [amount, from_to]
+//     );
+
+//     await client.query(
+//       "UPDATE users SET balance = balance - $1 WHERE id = $2",
+//       [amount, user_id]
+//     );
+
+//     const result = await client.query(
+//       "INSERT INTO transactions (type, from_to, description, amount, user_id, date_time) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *",
+//       [type, from_to, description, amount, user_id]
+//     );
+
+//     await client.query("COMMIT");
+//     return result.rows[0];
+//   } catch (error) {
+//     await client.query("ROLLBACK");
+//     console.error("Error in createTransaction:", error);
+//     throw new Error("Database error occurred while creating the transaction.");
+//   } finally {
+//     client.release();
+//   }
+// };
+
 const createTransfer = async (transaction) => {
-  const { type, from_to, description, amount, user_id } = transaction;
+  const { from_to, description, amount, user_id } = transaction;
 
   const client = await pool.connect();
 
@@ -45,16 +93,21 @@ const createTransfer = async (transaction) => {
       [amount, user_id]
     );
 
+    await client.query(
+      "INSERT INTO transactions (type, from_to, description, amount, user_id, date_time) VALUES ($1, $2, $3, $4, $5, NOW())",
+      ["KREDIT", user_id, description, amount, from_to]
+    );
+
     const result = await client.query(
       "INSERT INTO transactions (type, from_to, description, amount, user_id, date_time) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *",
-      [type, from_to, description, amount, user_id]
+      ["DEBIT", from_to, description, amount, user_id]
     );
 
     await client.query("COMMIT");
     return result.rows[0];
   } catch (error) {
     await client.query("ROLLBACK");
-    console.error("Error in createTransaction:", error);
+    console.error("Error in createTransfer:", error);
     throw new Error("Database error occurred while creating the transaction.");
   } finally {
     client.release();
