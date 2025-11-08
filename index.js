@@ -21,10 +21,11 @@ app.use(
 
 app.use(userRouter);
 app.use(transRouter);
-
-app.get("/", (req, res) => {
-  res.send("✅ Walled API is running successfully on OpenShift!");
-});
+app.use(
+  app.get("/", (req, res) => {
+    res.send("✅ Walled API is running successfully!");
+  })
+);
 app.listen(port, "0.0.0.0", () => {
   console.log(`Example app listening on port ${port}`);
 });
