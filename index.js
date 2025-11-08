@@ -5,10 +5,8 @@ const bodyParser = require("body-parser");
 const userRouter = require("./routers/users");
 const transRouter = require("./routers/transactions");
 const cors = require("cors");
-// const db = require("./db/db");
 
 const app = express();
-// const port = process.env.APP_PORT;
 const port = process.env.APP_PORT;
 
 app.use(cors());
@@ -19,13 +17,13 @@ app.use(
   })
 );
 
+app.get("/", (req, res) => {
+  res.send("✅ Walled API is running successfully!");
+});
+
 app.use(userRouter);
 app.use(transRouter);
-app.use(
-  app.get("/", (req, res) => {
-    res.send("✅ Walled API is running successfully!");
-  })
-);
+
 app.listen(port, "0.0.0.0", () => {
   console.log(`Example app listening on port ${port}`);
 });
